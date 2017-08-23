@@ -1,0 +1,70 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Cmd+Shift+Enter*. 
+
+```{r echo=False}
+#packages to install that we may need
+
+# install.packages("DBI")
+# install.packages("rJava")
+# install.packages("dbConnect")
+# install.packages("RJDBC")
+# install.packages("RMySQL")
+# install.packages("dbplyr")
+
+#initializing packages
+library(DBI)
+library(rJava)
+library(RJDBC)
+library(RMySQL)
+library(dplyr)
+library(dbplyr)
+```
+
+```{r}
+#setting up the connection string to the database
+
+mySqlCreds <- list(dbhostname = "52.203.27.250",
+               dbname   = "blownAway",
+               username = "BlownAway",
+               pass = "blownAway123!",
+               port = 3306
+                 )
+drv <- dbDriver("MySQL")
+
+```
+
+
+```{r}
+#pull data from the table into a variable 
+#connection string to the database
+con<-dbConnect(drv, host=mySqlCreds$dbhostname, dbname=mySqlCreds$dbname, 
+        user=mySqlCreds$username, password=mySqlCreds$pass, port = mySqlCreds$port)
+
+sql<-("select * from blownAway.yr_2017 limit 10")
+# 
+#  rs <- dbSendQuery(con, sql)
+# ds<- dbFetch(rs)
+#  dbDisconnect(con)
+ 
+db_2017 <- tbl(con ,sql("select * from blownAway.yr_2017"))
+
+
+
+db_2017<- as.data.frame(db_2017)
+db_2017$led_to_shot<-as.factor(db_2017$led_to_shot)
+
+
+str(db_2017) 
+
+View(db_2017)
+ 
+
+
+```
+
