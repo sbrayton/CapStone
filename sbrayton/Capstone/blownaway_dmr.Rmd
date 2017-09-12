@@ -80,57 +80,7 @@ View(db_2017)
 
 ```
 
-```{r}
- #porb. of make a shot successfully ~ number of passes in posession+time on clock+distance from basket
 
-clock_shot <- subset(db_2017,  select = c("start_shot_clock", "shot_result"))
-
-baller_shot <- subset(db_2017, shot_result != "NA", select = c("ballhandler_id", "shot_result"))
-
-
-str(baller_shot)
-
-plot(baller_shot)
-
-baller_shot$shot_resultasNum<-as.numeric(baller_shot$shot_result)
-
-baller_shot <- baller_shot[complete.cases(baller_shot), ]
-
-plot(baller_shot$ballhandler_id~baller_shot$shot_result, xlab='shot_result', ylab='baller_shot', main='Boxplots of Age by Race')
-
-summary(lm(baller_shot$ballhandler_id~baller_shot$shot_result, data=baller_shot))
-
-agg.count <- aggregate(baller_shot$shot_result ~ baller_shot$ballhandler_id, baller_shot, FUN="length")
-
-
-baller_shot %>% 
-    select( baller_shot$ballhandler_id, baller_shot$shot_result) %>%
-    filter(baller_shot$shot_result == 'TRUE')
-
-baller_shot %>% 
-    group_by(ballhandler_id) %>%
-  summarise_each(funs(t.test(.[vs == 0], .[vs == 1])$p.value), vars = disp:qsec)
-  
-    summarise(cntTrue = length(baller_shot$shot_result[baller_shot$shot_result=="True"]))
-
- p<-   baller_shot %>% group_by(baller_shot$ballhandler_id, baller_shot$shot_result) %>% mutate(count = n())
- 
- p[(p$ballhandler_id)=='399612',]
-    
-length(baller_shot$shot_result[baller_shot$shot_result=="False"])
-
-
-noNA.ins <- na.omit(baller_shot) # Option 1 
-
-nrow(noNA.ins[!complete.cases(noNA.ins),])
-
-#how many passes within a cycle for a player resulting in the shot, average?
-#as a predictor use the how many hands in a cycle can predict a successful shot
-#difference or distribution, of time between each pass in a cycle
-# 
-
-
-```
 
 ```{r}
 
