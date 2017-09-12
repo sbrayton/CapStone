@@ -10,7 +10,8 @@ Try executing this chunk by clicking the *Run* button within the chunk or by pla
 ```{r setup, include=FALSE, warning=FALSE}
 knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE, cache = TRUE)
 setwd("/Users/shamekabrayton/Dropbox/NYU/02_Module/07_Data Decision Data Making/Exam")
-pacman::p_load(DBI,rJava,tidyr,RJDBC,RMySQL, ggplot2,  reader, forcats, DT, broom, tidyverse, shiny, dplyr,dbplyr,stringr, sjPlot, sjmisc, questionr, stargazer, rio, ggeffects, FSelector)
+
+pacman::p_load(cluster,DBI,rJava,tidyr,RJDBC,RMySQL, ggplot2,  reader, forcats, DT, broom, tidyverse, shiny, dplyr,dbplyr,stringr, sjPlot, sjmisc, questionr, stargazer, rio, ggeffects, FSelector)
 ```
 
 
@@ -66,7 +67,7 @@ db_2017<- as.data.frame(db_2017)
 
 
 ```
-#get percent successes
+#get percent successes, Failures and Non-Attempts
 ```{r}
 
 DataLng <- db_2017
@@ -83,6 +84,19 @@ DataLng$percOfTrue <- (DataLng$True  )/(DataLng$`Total Access`)
 DataLng$percOfFalse <- (DataLng$False  )/(DataLng$`Total Access`)
 DataLng$percOfnoAttempt <- (DataLng$'NA'  )/(DataLng$`Total Access`)
   
+```
+
+```{r}
+
+df.means.fit <- kmeans(DataLng[,7:9], 3, nstart = 10000) # k = 3
+
+ # z <- augment(df.means.fit, CasinoData)
+ 
+z2 <- augment(df.means.fit, DataLng) 
+
+fviz_cluster(df.means.fit, data = DataLng[,7:9])
+
+df.means.fit
 ```
 
 
