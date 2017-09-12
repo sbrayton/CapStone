@@ -35,13 +35,7 @@ drv <- dbDriver("MySQL")
 con<-dbConnect(drv, host=mySqlCreds$dbhostname, dbname=mySqlCreds$dbname, 
         user=mySqlCreds$username, password=mySqlCreds$pass, port = mySqlCreds$port)
 
-sql<-("select * from blownAway.yr_2017 limit 10")
-# 
-#  rs <- dbSendQuery(con, sql)
-# ds<- dbFetch(rs)
-#  dbDisconnect(con)
- 
-# db_2017 <- tbl(con ,sql("select * from blownAway.yr_2017"))
+#connect to database and pull query into a table
 db_2017 <- tbl(con ,sql("
 select b.ballhandler_id
 ,`False`
@@ -67,17 +61,28 @@ left join (
 
 group by b.ballhandler_id,`False`,`True`,`NA` ,`Total Access`                        "))
 
-
+#alter the table to a dataframe
 db_2017<- as.data.frame(db_2017)
-# db_2017$led_to_shot<-as.factor(db_2017$led_to_shot)
-# db_2017$shot_result<-as.factor(db_2017$shot_result)
-
-str(db_2017) 
-
-View(db_2017)
- 
 
 
+```
+#get percent successes
+```{r}
+
+DataLng <- db_2017
+
+DataLng$True <- as.numeric(DataLng$True)
+DataLng$False <- as.numeric(DataLng$False)
+DataLng$'NA' <- as.numeric(DataLng$'NA')
+DataLng$`Total Access` <- as.numeric(DataLng$`Total Access`)
+
+DataLng[is.na(DataLng)] <- 0
+
+DataLng$percOfTot <- (DataLng$True + DataLng$False )/(DataLng$`Total Access`)
+DataLng$percOfTrue <- (DataLng$True  )/(DataLng$`Total Access`)
+DataLng$percOfFalse <- (DataLng$False  )/(DataLng$`Total Access`)
+DataLng$percOfnoAttempt <- (DataLng$'NA'  )/(DataLng$`Total Access`)
+  
 ```
 
 
@@ -87,6 +92,7 @@ View(db_2017)
 
 shoot <- tbl(con ,sql("select * from blownAway.yr_2017"))
 shoot<-as.data.frame(shoot)
+
 
 offense <- as.data.frame(cbind(chance_id=(shoot$chance_id),
                         ballhandler_id=(shoot$ballhandler_id),
@@ -103,6 +109,7 @@ offense$shot_result_num <- as.numeric(offense$shot_result)
 offense$shot_result_num[offense$shot_result_num==1] <- 0
 offense$shot_result_num[offense$shot_result_num==2] <- 1
 
+rm(shoot)
 ```
 
 ```{r}
