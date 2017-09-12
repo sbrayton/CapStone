@@ -41,13 +41,36 @@ sql<-("select * from blownAway.yr_2017 limit 10")
 # ds<- dbFetch(rs)
 #  dbDisconnect(con)
  
-db_2017 <- tbl(con ,sql("select * from blownAway.yr_2017"))
+# db_2017 <- tbl(con ,sql("select * from blownAway.yr_2017"))
+db_2017 <- tbl(con ,sql("
+select b.ballhandler_id
+,`False`
+,`True`
+,`NA`
+,`Total Access`
+from `blownAway`.`yr_2017` as b
+left join (
+	select   ballhandler_id,count(*) as `False` from `blownAway`.`yr_2017`
+	where shot_result='False' 	group by ballhandler_id
+	)f on f.ballhandler_id = b.ballhandler_id
+left join (
+	select   ballhandler_id,count(*) as `True` from `blownAway`.`yr_2017`
+	where shot_result='True' 	group by ballhandler_id
+	)t on t.ballhandler_id = b.ballhandler_id
+left join (
+	select   ballhandler_id,count(*) as `NA` from `blownAway`.`yr_2017`
+	where shot_result='NA' 	group by ballhandler_id
+	)na   on na.ballhandler_id = b.ballhandler_id
+left join (
+	select   ballhandler_id,count(*)as `Total Access` from `blownAway`.`yr_2017` 	group by ballhandler_id
+	)a on a.ballhandler_id = b.ballhandler_id
 
+group by b.ballhandler_id,`False`,`True`,`NA` ,`Total Access`                        "))
 
 
 db_2017<- as.data.frame(db_2017)
-db_2017$led_to_shot<-as.factor(db_2017$led_to_shot)
-db_2017$shot_result<-as.factor(db_2017$shot_result)
+# db_2017$led_to_shot<-as.factor(db_2017$led_to_shot)
+# db_2017$shot_result<-as.factor(db_2017$shot_result)
 
 str(db_2017) 
 
@@ -104,7 +127,39 @@ nrow(noNA.ins[!complete.cases(noNA.ins),])
 #how many passes within a cycle for a player resulting in the shot, average?
 #as a predictor use the how many hands in a cycle can predict a successful shot
 #difference or distribution, of time between each pass in a cycle
+# 
 
+
+```
+
+```{r}
+
+
+shoot <- tbl(con ,sql("select * from blownAway.yr_2017"))
+shoot<-as.data.frame(shoot)
+
+offense <- as.data.frame(cbind(chance_id=(shoot$chance_id),
+                        ballhandler_id=(shoot$ballhandler_id),
+                         defender_id=(shoot$defender_id),
+                         start_shot_clock=(shoot$start_shot_clock),
+                         basket_distance=(shoot$basket_distance),
+                         led_to_shot=(shoot$let_to_shot),
+                         shot_result=(shoot$shot_result)
+))
+
+offense <- na.omit(offense)
+
+offense$shot_result_num <- as.numeric(offense$shot_result)
+offense$shot_result_num[offense$shot_result_num==1] <- 0
+offense$shot_result_num[offense$shot_result_num==2] <- 1
+
+```
+
+```{r}
+
+sp<-offense%>% 
+  group_by(ballhandler_id)%>% 
+  summarise(shot_percentage=mean(shot_result_num))
 
 ```
 
