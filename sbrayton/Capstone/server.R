@@ -1,7 +1,8 @@
 # get shiny, DBI, dplyr and dbplyr from CRAN
-pacman::p_load(shiny,DBI,dplyr,dbplyr,cluster,DBI,rJava,tidyr,RJDBC,RMySQL, ggplot2,  reader, forcats, DT, broom, tidyverse, shiny, dplyr,dbplyr,stringr, sjPlot, sjmisc, questionr, stargazer, rio, ggeffects, FSelector)
+pacman::p_load(Factoextra,shiny,DBI,dplyr,dbplyr,cluster,DBI,rJava,tidyr,RJDBC,RMySQL, ggplot2,  reader, forcats, DT, broom, tidyverse, shiny, dplyr,dbplyr,stringr, sjPlot, sjmisc, questionr, stargazer, rio, ggeffects, FSelector)
 # get pool from GitHub, since it's not yet on CRAN
 devtools::install_github("rstudio/pool")
+
 
 mySqlCreds <- list(dbhostname = "52.203.27.250",
                    dbname   = "blownAway",
@@ -59,13 +60,25 @@ DataLng$percOfFalse <- (DataLng$False  )/(DataLng$`Total Access`)
 DataLng$percOfnoAttempt <- (DataLng$'NA'  )/(DataLng$`Total Access`)
 
 
+df.means.fit <- kmeans(DataLng[,7:9], 3, nstart = 10000) # k = 3
+
+library("factoextra", lib.loc="/Library/Frameworks/R.framework/Versions/3.3/Resources/library")
+
+z2 <- augment(df.means.fit, DataLng)
+
+library(cluster)
+
+fviz_cluster(df.means.fit, data = DataLng[,7:9])
+
+t <- as.data.frame(df.means.fit$centers)
+
 data_sets <- c("data_table")
 
 shinyServer(function(input, output) {
   
   
   # Output the data
-  output$data_table <- renderTable({ DataLng
+  output$data_table <- renderTable({ t
   })   
 
   

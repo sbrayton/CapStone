@@ -88,7 +88,7 @@ DataLng$percOfnoAttempt <- (DataLng$'NA'  )/(DataLng$`Total Access`)
 
 ```{r}
 
-df.means.fit <- kmeans(DataLng[,7:9], 3, nstart = 10000) # k = 3
+df.means.fit <- kmeans(DataLng[,7:9], 6, nstart = 10000) # k = 3
 
  # z <- augment(df.means.fit, CasinoData)
  
@@ -97,6 +97,11 @@ z2 <- augment(df.means.fit, DataLng)
 fviz_cluster(df.means.fit, data = DataLng[,7:9])
 
 df.means.fit
+
+str(df.means.fit)
+
+t<-as.data.frame(df.means.fit$centers)
+
 ```
 
 
