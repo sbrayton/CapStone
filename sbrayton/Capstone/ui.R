@@ -46,7 +46,8 @@ shinyUI(fluidPage(
                              tabPanel("Random Forrest", plotOutput("plot2")), 
                              tabPanel("Table1", tableOutput("data_table1")), 
                              tabPanel("Table2", tableOutput("data_table2"))
-                        )#tabsetPanel
+                          )#tabsetPanel
+                        )
                
                
                )#mainPanel
