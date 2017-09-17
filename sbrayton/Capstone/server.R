@@ -104,9 +104,8 @@ loadPredPkgs<-function(){  # get shiny, DBI, dplyr and dbplyr from CRAN
 }
 
 #function to get and compute the data
-compute_data <- function() {
- if(! exists(db_2017)  ){getData2()}
-  
+compute_data <- function(DataLng) {
+
   df.means.fit <- kmeans(DataLng[,7:9], 3, nstart = 10000) # k = 3
   
   dat <- as.data.frame(df.means.fit$centers)
@@ -197,6 +196,28 @@ compute_prediction<- function(shoot){
   
 }
 
+compute_Hist<- function(x)({
+  
+  df <- gather(x, ballhandler, tot,2:4, factor_key=TRUE)
+  
+  for (player in df){
+    
+    df$percOfTot <- (df$tot/df$`Total Access`)
+  }
+  
+  dataTrue<-subset( df, df$ballhandler=="True")
+  
+  dataTrue <- na.omit(dataTrue)
+  
+  dataFalse<-subset( df, df$ballhandler=="False")
+  
+  dataFalse <- na.omit(dataFalse)
+  
+  dataFalse$percOfTot
+
+  
+})
+
 shinyServer(function(input, output, session) {
 
   withProgress(message = 'Calculation in progress',
@@ -240,7 +261,6 @@ shinyServer(function(input, output, session) {
                 
               })
 
-              
               ##random forrest plot
               output$plot2 <- renderPlot({
                 
@@ -264,13 +284,47 @@ shinyServer(function(input, output, session) {
 
               })
               
-              
               # # Output the data
-              # output$data_table <- renderTable({
-              #
-              #   getData2()
-              #
-              # })
+              output$data_table <- renderTable({
+
+                compute_data(DataLng)
+
+              })
+              
+              ##random forrest plot
+              output$HistTrueFreq <- renderPlot({
+
+                withProgress(message = 'Drawing frequency',
+                             detail = 'This may take a while...', value = 0, {
+                               
+                               setProgress(message = "Loading data..",value = .25)
+                               #loadPredPkgs()
+
+                               setProgress(message = "Running Random Forrest...",value = .5)
+                               
+                               n <- input$n
+                                
+                                hist(compute_Hist(db_2017),
+                                     main = paste("r", "(", n, ")", sep = ""),
+                                     col = "#75AADB", border = "white")
+                               
+                               
+                               # hist(compute_Hist(db_2017),
+                               #      xlab="Percent", main="Percentage Scored Shots by Ball handler",
+                               #      border="black",
+                               #      col="grey",
+                               # 
+                               #      breaks=5
+                               # )
+
+                               setProgress(message = "Ok !",value = 100)
+                               Sys.sleep(1)
+                               
+                             })
+                
+                
+              })
+              
               # output$data_table2 <- renderTable({
               #
               #   compute_ballerTrue()
