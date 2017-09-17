@@ -1,17 +1,8 @@
 library("shiny")
 library("DT")
 
-
-loadPkgs<-function(){
-  # get shiny, DBI, dplyr and dbplyr from CRAN
-  pacman::p_load(shiny,DBI,dplyr,dbplyr,cluster,DBI,rJava,tidyr,RJDBC,RMySQL)
-
-if(!require(devtools)) install.packages("devtools")
-devtools::install_github("kassambara/factoextra")
-}
-#get the data
-
-  #Set global database credentials
+#global db creds and connection set
+{  #Set global database credentials
   mySqlCreds <- list(dbhostname = "52.203.27.250",
                      dbname   = "blownAway",
                      username = "BlownAway",
@@ -21,8 +12,23 @@ devtools::install_github("kassambara/factoextra")
   drv <- dbDriver("MySQL")
   #set global database connection variable
   conn<-dbConnect(drv, host=mySqlCreds$dbhostname, dbname=mySqlCreds$dbname, 
-                  user=mySqlCreds$username, password=mySqlCreds$pass, port = mySqlCreds$port)
+                  user=mySqlCreds$username, password=mySqlCreds$pass, port = mySqlCreds$port)}
 
+#load initial packages. called at the beginning of the session
+loadPkgs<-function(){
+  # get shiny, DBI, dplyr and dbplyr from CRAN
+  pacman::p_load(shiny,DBI,dplyr,dbplyr,cluster,DBI,rJava,tidyr,RJDBC,RMySQL)
+
+if(!require(devtools)) install.packages("devtools")
+devtools::install_github("kassambara/factoextra")
+}
+loadPredPkgs<-function(){  # get shiny, DBI, dplyr and dbplyr from CRAN
+  pacman::p_load(stringr, sjPlot, sjmisc, questionr, stargazer, rio, ggeffects, FSelector,forcats, DT, broom, tidyverse,DMwR)
+  library("rpart.plot")
+  }
+
+
+#get the data
   getData1<- function(){
     shoot <- tbl(conn,sql("select * from blownAway.yr_2017"))
     shoot<-as.data.frame(shoot)
@@ -130,7 +136,8 @@ compute_avgDist<-function(){
     summarise(average_distance_busket = mean(basket_distance))
 }
 
-compute_prediction<- function(){
+compute_prediction<- function(shoot){
+
  subset_2017=shoot[c(1,5,6,7,8)]
   
   #average time on clock
@@ -188,10 +195,63 @@ shinyServer(function(input, output, session) {
                  setProgress(message = "getting data...",value = .5)
                  DataLng<<-getData2()
                    
-                   
+                 setProgress(message = "getting data...",value = .75)
+                 shoot<<-getData1()   
                  
                })
   
+              ##cluster data            
+              output$plot1 <- renderPlot({
+                
+                withProgress(message = 'Calculation in progress',
+                             detail = 'This may take a while...', value = 0, {
+                               
+                               palette(c("#E41A1C", "#377EB8", "#4DAF4A", "#984EA3",
+                                         "#FF7F00", "#FFFF33", "#A65628", "#F781BF", "#999999"))
+                               par(mar = c(5.1, 4.1, 0, 1))
+                               
+                               setProgress(message = "Plotting the data...",value = .25)
+                               Sys.sleep(1)
+                               setProgress(message = "Plotting the data...",value = .5)
+                               
+                               plot(cluster_plot_data(DataLng),
+                                    col = cluster_plot_data()$cluster,
+                                    pch = 20, cex = 3)
+                               points(cluster_plot_data()$centers, pch = 4, cex = 4, lwd = 4)
+                               
+                               setProgress(message = "Ok !",value = 100)
+                               Sys.sleep(1)
+                               
+                             })
+                
+                
+              })
+
+              
+              ##random forrest plot
+              output$plot2 <- renderPlot({
+                
+                withProgress(message = 'Calculation in progress',
+                             detail = 'This may take a while...', value = 0, {
+
+                               setProgress(message = "Loading Prediction Packages..",value = .25)
+                               loadPredPkgs()
+                               
+                               setProgress(message = "Plotting the data...",value = .5)
+                               palette(c("#E41A1C", "#377EB8", "#4DAF4A", "#984EA3",
+                                         "#FF7F00", "#FFFF33", "#A65628", "#F781BF", "#999999"))
+                               par(mar = c(5.1, 4.1, 0, 1))
+                               plot(compute_prediction(shoot))
+                               
+                               setProgress(message = "Ok !",value = 100)
+                               Sys.sleep(1)
+                               
+                             })
+                
+
+              })
+              
+              
               # # Output the data
               # output$data_table <- renderTable({
               #
@@ -213,38 +273,9 @@ shinyServer(function(input, output, session) {
               #   compute_avgDist()
               #   
               # }) 
-              # 
-              output$plot1 <- renderPlot({
-                
-                withProgress(message = 'Calculation in progress',
-                             detail = 'This may take a while...', value = 0, {
-                               
-                               palette(c("#E41A1C", "#377EB8", "#4DAF4A", "#984EA3",
-                                         "#FF7F00", "#FFFF33", "#A65628", "#F781BF", "#999999"))
-                               par(mar = c(5.1, 4.1, 0, 1))
-                               
-                               setProgress(message = "Initialization...",value = .25)
-                               loadPkgs() 
-                               setProgress(message = "getting data...",value = .5)
-                               
-                               plot(cluster_plot_data(DataLng),
-                                    col = cluster_plot_data()$cluster,
-                                    pch = 20, cex = 3)
-                               points(cluster_plot_data()$centers, pch = 4, cex = 4, lwd = 4)
-                               
-                               setProgress(message = "Ok !",value = 100)
-                               Sys.sleep(1)
-                               
-                             })
-
-
-              })
+              #
+  
               
-              # output$plot2 <- renderPlot({
-              #   palette(c("#E41A1C", "#377EB8", "#4DAF4A", "#984EA3",
-              #             "#FF7F00", "#FFFF33", "#A65628", "#F781BF", "#999999"))
-              #   par(mar = c(5.1, 4.1, 0, 1))
-              #   plot(compute_prediction())
-              # })
+
   
 })
