@@ -1,0 +1,74 @@
+---
+title: "Blown Away DMR"
+author: "Albert,Ahmad,Veronica, Shameka"
+date: "9/12/2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+
+pacman::p_load(tidyr, ggplot2,  reader, forcats, DT, broom, tidyverse, shiny, dplyr, sjPlot, sjmisc, questionr, stargazer, rio, ggeffects, FSelector)
+```
+
+
+
+```{r}
+shoot <- import("~/Dropbox/NYU/98_Capstone2018/data/nba_touch_data_2017.csv")
+offense <- as.data.frame(cbind(chance_id=(shoot$chance_id),
+                        ballhandler_id=(shoot$ballhandler_id),
+                         defender_id=(shoot$defender_id),
+                         start_shot_clock=(shoot$start_shot_clock),
+                         basket_distance=(shoot$basket_distance),
+                         led_to_shot=(shoot$let_to_shot),
+                         shot_result=(shoot$shot_result)
+))
+
+
+offense <- na.omit(offense)
+
+
+
+offense$shot_result_num <- as.numeric(offense$shot_result)
+offense$shot_result_num[offense$shot_result_num==1] <- 0
+offense$shot_result_num[offense$shot_result_num==2] <- 1
+
+
+```
+
+```{r}
+#adding three points and two points category
+
+
+
+offense$distance<-offense$basket_distance
+
+offense$distance[is.na(offense$distance)] <- 0
+
+offense$distance<-as.character(offense$basket_distance) 
+
+offense$distance<-sapply(offense$distance, as.numeric)
+
+
+
+offense$dist<- ifelse(offense$distance>=23 , 3, NA)
+
+
+
+
+```
+
+
+```{r}
+
+#We take a look ballhandler's shoot percentage
+
+sp<-offense%>% 
+  group_by(ballhandler_id)%>% 
+  summarise(shot_percentage=mean(shot_result_num))
+
+
+```
+
+
