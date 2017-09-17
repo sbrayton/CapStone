@@ -3,10 +3,8 @@ library("DT")
 
 
 loadPkgs<-function(){
-# get shiny, DBI, dplyr and dbplyr from CRAN
-pacman::p_load(Factoextra,shiny,DBI,dplyr,dbplyr,cluster,DBI,rJava,tidyr,RJDBC,RMySQL, ggplot2,  reader, forcats, DT, broom, tidyverse, shiny, dplyr,dbplyr,stringr, sjPlot, sjmisc, questionr, stargazer, rio, ggeffects, FSelector)
-# get pool from GitHub, since it's not yet on CRAN
-# devtools::install_github("rstudio/pool")
+  # get shiny, DBI, dplyr and dbplyr from CRAN
+  pacman::p_load(shiny,DBI,dplyr,dbplyr,cluster,DBI,rJava,tidyr,RJDBC,RMySQL)
 
 if(!require(devtools)) install.packages("devtools")
 devtools::install_github("kassambara/factoextra")
