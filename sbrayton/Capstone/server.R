@@ -26,6 +26,7 @@ devtools::install_github("kassambara/factoextra")
   getData1<- function(){
     shoot <- tbl(conn,sql("select * from blownAway.yr_2017"))
     shoot<-as.data.frame(shoot)
+    shoot
   }
   getData2<- function(){
     #connect to database and pull query into a table
@@ -96,9 +97,7 @@ compute_data <- function() {
 }
 
 #function to get and compute the data
-cluster_plot_data <- function() {
-
-  DataLng<-getData2()
+cluster_plot_data <- function(x) {
   
   df.means.fit <- kmeans(DataLng[,7:9], 6, nstart = 10000) # k = 3
 
@@ -116,6 +115,8 @@ compute_ballerTrue <-function(){
 
 compute_shotClockChange<-function(){
   # The average time on the shot clock when each defender charges the offender
+  shoot <-getData1()
+  
   shoot %>% 
     group_by(defender_id, ballhandler_id) %>% 
     summarise(average_shot_clock = mean(start_shot_clock))
@@ -177,8 +178,19 @@ compute_prediction<- function(){
 }
 
 shinyServer(function(input, output, session) {
-  
 
+  withProgress(message = 'Calculation in progress',
+               detail = 'This may take a while...', value = 0, {
+                 
+                 setProgress(message = "Initialization...",value = .25)
+                 loadPkgs() 
+                 
+                 setProgress(message = "getting data...",value = .5)
+                 DataLng<<-getData2()
+                   
+                   
+                 
+               })
   
               # # Output the data
               # output$data_table <- renderTable({
@@ -215,7 +227,7 @@ shinyServer(function(input, output, session) {
                                loadPkgs() 
                                setProgress(message = "getting data...",value = .5)
                                
-                               plot(cluster_plot_data(),
+                               plot(cluster_plot_data(DataLng),
                                     col = cluster_plot_data()$cluster,
                                     pch = 20, cex = 3)
                                points(cluster_plot_data()$centers, pch = 4, cex = 4, lwd = 4)
@@ -224,21 +236,15 @@ shinyServer(function(input, output, session) {
                                Sys.sleep(1)
                                
                              })
-                
-                
-                
-                
-                  
-             
 
 
               })
               
-              output$plot2 <- renderPlot({
-                palette(c("#E41A1C", "#377EB8", "#4DAF4A", "#984EA3",
-                          "#FF7F00", "#FFFF33", "#A65628", "#F781BF", "#999999"))
-                par(mar = c(5.1, 4.1, 0, 1))
-                plot(compute_prediction())
-              })
+              # output$plot2 <- renderPlot({
+              #   palette(c("#E41A1C", "#377EB8", "#4DAF4A", "#984EA3",
+              #             "#FF7F00", "#FFFF33", "#A65628", "#F781BF", "#999999"))
+              #   par(mar = c(5.1, 4.1, 0, 1))
+              #   plot(compute_prediction())
+              # })
   
 })
