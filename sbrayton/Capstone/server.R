@@ -2,7 +2,7 @@ library("shiny")
 library("DT")
 
 #global db creds and connection set
-{  #Set global database credentials
+getDataSql <- function( query ) {  #Set global database credentials
   mySqlCreds <- list(dbhostname = "52.203.27.250",
                      dbname   = "blownAway",
                      username = "BlownAway",
@@ -11,8 +11,12 @@ library("DT")
   )
   drv <- dbDriver("MySQL")
   #set global database connection variable
-  conn<-dbConnect(drv, host=mySqlCreds$dbhostname, dbname=mySqlCreds$dbname, 
-                  user=mySqlCreds$username, password=mySqlCreds$pass, port = mySqlCreds$port)}
+  conn<-dbConnect(RMySQL::MySQL(),  host=mySqlCreds$dbhostname, dbname=mySqlCreds$dbname, 
+                  user=mySqlCreds$username, password=mySqlCreds$pass, port = mySqlCreds$port)
+  result <- dbGetQuery(conn, query)
+  dbDisconnect(conn)
+  result
+  }
 
 #load initial packages. called at the beginning of the session
 loadPkgs<-function(){
@@ -30,13 +34,17 @@ loadPredPkgs<-function(){  # get shiny, DBI, dplyr and dbplyr from CRAN
 
 #get the data
   getData1<- function(){
-    shoot <- tbl(conn,sql("select * from blownAway.yr_2017"))
+    
+    query<-"select * from blownAway.yr_2017"
+    
+    shoot<- getDataSql(query)
+
     shoot<-as.data.frame(shoot)
-    shoot
+
   }
   getData2<- function(){
     #connect to database and pull query into a table
-    db_2017 <- tbl(conn ,sql("
+    query<-"
                              select b.ballhandler_id
                              ,`False`
                              ,`True`
@@ -59,10 +67,15 @@ loadPredPkgs<-function(){  # get shiny, DBI, dplyr and dbplyr from CRAN
                              select   ballhandler_id,count(*)as `Total Access` from `blownAway`.`yr_2017` 	group by ballhandler_id
                              )a on a.ballhandler_id = b.ballhandler_id
                              
-                             group by b.ballhandler_id,`False`,`True`,`NA` ,`Total Access`                        "))
+                             group by b.ballhandler_id,`False`,`True`,`NA` ,`Total Access`                        "
     
+    db_2017<- getDataSql(query)
+    
+
     #alter the table to a dataframe
     db_2017<- as.data.frame(db_2017)
+    
+
     
     DataLng <- db_2017
     
@@ -210,9 +223,9 @@ shinyServer(function(input, output, session) {
                                          "#FF7F00", "#FFFF33", "#A65628", "#F781BF", "#999999"))
                                par(mar = c(5.1, 4.1, 0, 1))
                                
-                               setProgress(message = "Plotting the data...",value = .25)
+                               setProgress(message = "Generating Custers...",value = .25)
                                Sys.sleep(1)
-                               setProgress(message = "Plotting the data...",value = .5)
+                               setProgress(message = "Generating Clusters...",value = .5)
                                
                                plot(cluster_plot_data(DataLng),
                                     col = cluster_plot_data()$cluster,
@@ -237,7 +250,7 @@ shinyServer(function(input, output, session) {
                                setProgress(message = "Loading Prediction Packages..",value = .25)
                                loadPredPkgs()
                                
-                               setProgress(message = "Plotting the data...",value = .5)
+                               setProgress(message = "Running Random Forrest...",value = .5)
                                palette(c("#E41A1C", "#377EB8", "#4DAF4A", "#984EA3",
                                          "#FF7F00", "#FFFF33", "#A65628", "#F781BF", "#999999"))
                                par(mar = c(5.1, 4.1, 0, 1))
