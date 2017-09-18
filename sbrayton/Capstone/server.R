@@ -42,42 +42,12 @@ loadPredPkgs<-function(){  # get shiny, DBI, dplyr and dbplyr from CRAN
     shoot<-as.data.frame(shoot)
 
   }
-  getData2<- function(){
-    #connect to database and pull query into a table
-    query<-"
-                             select b.ballhandler_id
-                             ,`False`
-                             ,`True`
-                             ,`NA`
-                             ,`Total Access`
-                             from `blownAway`.`yr_2017` as b
-                             left join (
-                             select   ballhandler_id,count(*) as `False` from `blownAway`.`yr_2017`
-                             where shot_result='False' 	group by ballhandler_id
-                             )f on f.ballhandler_id = b.ballhandler_id
-                             left join (
-                             select   ballhandler_id,count(*) as `True` from `blownAway`.`yr_2017`
-                             where shot_result='True' 	group by ballhandler_id
-                             )t on t.ballhandler_id = b.ballhandler_id
-                             left join (
-                             select   ballhandler_id,count(*) as `NA` from `blownAway`.`yr_2017`
-                             where shot_result='NA' 	group by ballhandler_id
-                             )na   on na.ballhandler_id = b.ballhandler_id
-                             left join (
-                             select   ballhandler_id,count(*)as `Total Access` from `blownAway`.`yr_2017` 	group by ballhandler_id
-                             )a on a.ballhandler_id = b.ballhandler_id
-                             
-                             group by b.ballhandler_id,`False`,`True`,`NA` ,`Total Access`                        "
-    
-    db_2017<- getDataSql(query)
-    
+  
+  getData2<- function(x){
 
-    #alter the table to a dataframe
-    db_2017<- as.data.frame(db_2017)
+  
     
-
-    
-    DataLng <- db_2017
+    DataLng <- x
     
     DataLng$True <- as.numeric(DataLng$True)
     DataLng$False <- as.numeric(DataLng$False)
@@ -93,15 +63,46 @@ loadPredPkgs<-function(){  # get shiny, DBI, dplyr and dbplyr from CRAN
     
     DataLng
     
-    # df.means.fit <- kmeans(DataLng[,7:9], 3, nstart = 10000) # k = 3
-    # 
-    # dat <- as.data.frame(df.means.fit$centers)
-    # 
-    # 
-    # dat
+   
    
 
-}
+  }
+  
+  getData3<-function(){
+        #connect to database and pull query into a table
+        query<-"
+        select b.ballhandler_id
+        ,`False`
+        ,`True`
+        ,`NA`
+        ,`Total Access`
+        from `blownAway`.`yr_2017` as b
+        left join (
+        select   ballhandler_id,count(*) as `False` from `blownAway`.`yr_2017`
+        where shot_result='False' 	group by ballhandler_id
+        )f on f.ballhandler_id = b.ballhandler_id
+        left join (
+        select   ballhandler_id,count(*) as `True` from `blownAway`.`yr_2017`
+        where shot_result='True' 	group by ballhandler_id
+        )t on t.ballhandler_id = b.ballhandler_id
+        left join (
+        select   ballhandler_id,count(*) as `NA` from `blownAway`.`yr_2017`
+        where shot_result='NA' 	group by ballhandler_id
+        )na   on na.ballhandler_id = b.ballhandler_id
+        left join (
+        select   ballhandler_id,count(*)as `Total Access` from `blownAway`.`yr_2017` 	group by ballhandler_id
+        )a on a.ballhandler_id = b.ballhandler_id
+        
+        group by b.ballhandler_id,`False`,`True`,`NA` ,`Total Access`                        "
+        
+        db_2017<- getDataSql(query)
+        
+        
+        #alter the table to a dataframe
+        db_2017<- as.data.frame(db_2017)
+        
+        db_2017
+}  
 
 #function to get and compute the data
 compute_data <- function(DataLng) {
@@ -227,9 +228,12 @@ shinyServer(function(input, output, session) {
                  loadPkgs() 
                  
                  setProgress(message = "getting data...",value = .5)
-                 DataLng<<-getData2()
+                 db_2017<<-getData3()
+                 
+                 setProgress(message = "getting more data...",value = .75)
+                 DataLng<<-getData2(db_2017)
                    
-                 setProgress(message = "getting data...",value = .75)
+                 setProgress(message = "getting data...",value = 1)
                  shoot<<-getData1()   
                  
                })
@@ -306,7 +310,7 @@ shinyServer(function(input, output, session) {
                                 
                                 hist(compute_Hist(db_2017),
                                      main = paste("r", "(", n, ")", sep = ""),
-                                     col = "#75AADB", border = "white")
+                                     col = "black", border = "white")
                                
                                
                                # hist(compute_Hist(db_2017),
